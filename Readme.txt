@@ -2,7 +2,7 @@ K Lawson
 Exploration of STM32 Cube code generator.  Can TX.  It's good for setting up the pins but it's easier porting a demo
 at the moment so far as code generation is concerned.
 
-Currently this doesn't work it hangs during can TX.
+
 
 
 Configuration	CANTx
