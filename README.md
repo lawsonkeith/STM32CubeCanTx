@@ -1,6 +1,7 @@
 # STM32CubeCanTx
-Derivation of CAN Tx for CTM32F103 using STMCube MX.
+Derivation of CAN Tx for CTM32F103 using STMCube MX using Atollic and STM32F103C8T6 board and SWD.
 
-Test derivation, this sets up the peripherals ok but there's a bit of a leap to then get it to do anything.  I think using examples is better.
+Test derivation, this sets up the peripherals ok but there's a big leap to then get it to do anything.  I think using examples is better then just use this as a ref to set the pins up.
 
-i.e port MX example into code then use this just to tailor the IO config as required.
+Left in an unworking state, cant handle rx interrupt...
+
