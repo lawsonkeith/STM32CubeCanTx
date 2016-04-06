@@ -46,7 +46,7 @@
 /* Exported functions ------------------------------------------------------- */
 
 void SysTick_Handler(void);
-void CAN1_SCE_IRQHandler(void);
+void CANx_RX_IRQHandler(void);
 
 #ifdef __cplusplus
 }

@@ -59,9 +59,7 @@ void HAL_MspInit(void)
     */
   __HAL_AFIO_REMAP_SWJ_NOJTAG();
 
-  /* USER CODE BEGIN MspInit 1 */
 
-  /* USER CODE END MspInit 1 */
 }
 
 void HAL_ADC_MspInit(ADC_HandleTypeDef* hadc)
@@ -149,11 +147,11 @@ void HAL_CAN_MspInit(CAN_HandleTypeDef* hcan)
     GPIO_InitStruct.Speed = GPIO_SPEED_HIGH;
     HAL_GPIO_Init(GPIOA, &GPIO_InitStruct);
 
-  /* Peripheral interrupt init*/
-    HAL_NVIC_SetPriority(CAN1_SCE_IRQn, 0, 0);
-    HAL_NVIC_EnableIRQ(CAN1_SCE_IRQn);
   /* USER CODE BEGIN CAN1_MspInit 1 */
-
+    /* USER CODE BEGIN MspInit 1 */
+    HAL_NVIC_SetPriority(USB_LP_CAN1_RX0_IRQn, 1, 0);
+    HAL_NVIC_EnableIRQ(USB_LP_CAN1_RX0_IRQn);
+    /* USER CODE END MspInit 1 */
   /* USER CODE END CAN1_MspInit 1 */
   }
 
@@ -175,9 +173,6 @@ void HAL_CAN_MspDeInit(CAN_HandleTypeDef* hcan)
     PA12     ------> CAN_TX 
     */
     HAL_GPIO_DeInit(GPIOA, GPIO_PIN_11|GPIO_PIN_12);
-
-    /* Peripheral interrupt DeInit*/
-    HAL_NVIC_DisableIRQ(CAN1_SCE_IRQn);
 
   }
   /* USER CODE BEGIN CAN1_MspDeInit 1 */

@@ -66,7 +66,7 @@ static void MX_I2C1_Init(void);
 static void MX_IWDG_Init(void);
 static void MX_USART1_UART_Init(void);
 static void MX_USART3_UART_Init(void);
-void Error_Handler();
+void Error_Handler(void);
 
 /* USER CODE BEGIN PFP */
 /* Private function prototypes -----------------------------------------------*/
@@ -94,49 +94,72 @@ int main(void)
 
   /* Initialize all configured peripherals */
   MX_GPIO_Init();
-  MX_ADC1_Init();
+ // MX_ADC1_Init();
   MX_CAN_Init();
   MX_CRC_Init();
-  MX_I2C1_Init();
-  MX_IWDG_Init();
-  MX_USART1_UART_Init();
-  MX_USART3_UART_Init();
+ // MX_I2C1_Init();
+//  MX_IWDG_Init();
+//  MX_USART1_UART_Init();
+//  MX_USART3_UART_Init();
 
   /* USER CODE BEGIN 2 */
 
   /* USER CODE END 2 */
 
   /* Infinite loop */
-  /* USER CODE BEGIN WHILE */
-  int x=0;
-  /*##-2- Start the Reception process and enable reception interrupt #########*/
-  /*if (HAL_CAN_Receive_IT(&hcan, CAN_FIFO0) != HAL_OK)
+
+
+ int x=0;
+ /*##-2- Start the Reception process and enable reception interrupt #########*/
+if (HAL_CAN_Receive_IT(&hcan, CAN_FIFO0) != HAL_OK)
+ {
+ //  * Reception Error *
+   Error_Handler();
+ }
+
+ while (1)
+ {
+/* USER CODE END WHILE */
+   HAL_Delay(400);
+   HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_13);
+ /* USER CODE BEGIN 3 */
+
+
+   /* Set the data to be tranmitted */
+   hcan.pTxMsg->Data[0] = x++;
+   hcan.pTxMsg->Data[1] = 0xAD;
+
+   /*##-3- Start the Transmission process ###############################*/
+   if (HAL_CAN_Transmit(&hcan, 10) != HAL_OK)
+   {
+     /* Transmition Error */
+     Error_Handler();
+   }
+   HAL_Delay(10);
+ }
+
+}
+
+/**
+  * @brief  Transmission  complete callback in non blocking mode
+  * @param  CanHandle: pointer to a CAN_HandleTypeDef structure that contains
+  *         the configuration information for the specified CAN.
+  * @retval None
+  */
+void HAL_CAN_RxCpltCallback(CAN_HandleTypeDef *CanHandle)
+{
+  if ((CanHandle->pRxMsg->StdId == 0x321) && (CanHandle->pRxMsg->IDE == CAN_ID_STD) && (CanHandle->pRxMsg->DLC == 2))
   {
-    * Reception Error *
-    Error_Handler();
-  }*/
-
-  while (1)
-  {
-    /* USER CODE END WHILE */
-        HAL_Delay(1000);
-        HAL_GPIO_TogglePin(GPIOC,GPIO_PIN_13);
-      /* USER CODE BEGIN 3 */
-
-
-        /* Set the data to be tranmitted */
-        hcan.pTxMsg->Data[0] = x++;
-        hcan.pTxMsg->Data[1] = 0xAD;
-
-        /*##-3- Start the Transmission process ###############################*/
-        if (HAL_CAN_Transmit(&hcan, 10) != HAL_OK)
-        {
-          /* Transmition Error */
-          Error_Handler();
-        }
-        HAL_Delay(10);
+    //LED_Display(CanHandle->pRxMsg->Data[0]);
+   // ubKeyNumber = CanHandle->pRxMsg->Data[0];
   }
 
+  /* Receive */
+  if (HAL_CAN_Receive_IT(CanHandle, CAN_FIFO0) != HAL_OK)
+  {
+    /* Reception Error */
+    Error_Handler();
+  }
 }
 
 /** System Clock Configuration
@@ -144,34 +167,34 @@ int main(void)
 void SystemClock_Config(void)
 {
 
-  RCC_OscInitTypeDef RCC_OscInitStruct;
-  RCC_ClkInitTypeDef RCC_ClkInitStruct;
-  RCC_PeriphCLKInitTypeDef PeriphClkInit;
+  RCC_ClkInitTypeDef clkinitstruct = {0};
+   RCC_OscInitTypeDef oscinitstruct = {0};
 
-  RCC_OscInitStruct.OscillatorType = RCC_OSCILLATORTYPE_HSI|RCC_OSCILLATORTYPE_LSI;
-  RCC_OscInitStruct.HSIState = RCC_HSI_ON;
-  RCC_OscInitStruct.HSICalibrationValue = 16;
-  RCC_OscInitStruct.LSIState = RCC_LSI_ON;
-  RCC_OscInitStruct.PLL.PLLState = RCC_PLL_NONE;
-  HAL_RCC_OscConfig(&RCC_OscInitStruct);
+   /* Enable HSE Oscillator and activate PLL with HSE as source */
+   oscinitstruct.OscillatorType  = RCC_OSCILLATORTYPE_HSE;
+   oscinitstruct.HSEState        = RCC_HSE_ON;
+   oscinitstruct.HSEPredivValue  = RCC_HSE_PREDIV_DIV1;
+   oscinitstruct.PLL.PLLState    = RCC_PLL_ON;
+   oscinitstruct.PLL.PLLSource   = RCC_PLLSOURCE_HSE;
+   oscinitstruct.PLL.PLLMUL      = RCC_PLL_MUL9;
+   if (HAL_RCC_OscConfig(&oscinitstruct)!= HAL_OK)
+   {
+     /* Initialization Error */
+     while(1);
+   }
 
-  RCC_ClkInitStruct.ClockType = RCC_CLOCKTYPE_SYSCLK;
-  RCC_ClkInitStruct.SYSCLKSource = RCC_SYSCLKSOURCE_HSI;
-  RCC_ClkInitStruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
-  RCC_ClkInitStruct.APB1CLKDivider = RCC_HCLK_DIV1;
-  RCC_ClkInitStruct.APB2CLKDivider = RCC_HCLK_DIV1;
-  HAL_RCC_ClockConfig(&RCC_ClkInitStruct, FLASH_LATENCY_0);
-
-  PeriphClkInit.PeriphClockSelection = RCC_PERIPHCLK_ADC;
-  PeriphClkInit.AdcClockSelection = RCC_ADCPCLK2_DIV2;
-  HAL_RCCEx_PeriphCLKConfig(&PeriphClkInit);
-
-  HAL_SYSTICK_Config(HAL_RCC_GetHCLKFreq()/1000);
-
-  HAL_SYSTICK_CLKSourceConfig(SYSTICK_CLKSOURCE_HCLK);
-
-  /* SysTick_IRQn interrupt configuration */
-  HAL_NVIC_SetPriority(SysTick_IRQn, 0, 0);
+   /* Select PLL as system clock source and configure the HCLK, PCLK1 and PCLK2
+      clocks dividers */
+   clkinitstruct.ClockType = (RCC_CLOCKTYPE_SYSCLK | RCC_CLOCKTYPE_HCLK | RCC_CLOCKTYPE_PCLK1 | RCC_CLOCKTYPE_PCLK2);
+   clkinitstruct.SYSCLKSource = RCC_SYSCLKSOURCE_PLLCLK;
+   clkinitstruct.AHBCLKDivider = RCC_SYSCLK_DIV1;
+   clkinitstruct.APB2CLKDivider = RCC_HCLK_DIV1;
+   clkinitstruct.APB1CLKDivider = RCC_HCLK_DIV2;
+   if (HAL_RCC_ClockConfig(&clkinitstruct, FLASH_LATENCY_2)!= HAL_OK)
+   {
+     /* Initialization Error */
+     while(1);
+   }
 }
 
 /* ADC1 init function */
@@ -203,8 +226,13 @@ void MX_ADC1_Init(void)
 /* CAN init function */
 void MX_CAN_Init(void)
 {
+  CAN_FilterConfTypeDef  sFilterConfig;
+  static CanTxMsgTypeDef        TxMessage;
+  static CanRxMsgTypeDef        RxMessage;
 
   hcan.Instance = CAN1;
+  hcan.pTxMsg = &TxMessage;
+  hcan.pRxMsg = &RxMessage;
   hcan.Init.Prescaler = 4;
   hcan.Init.Mode = CAN_MODE_NORMAL;
   hcan.Init.SJW = CAN_SJW_1TQ;
@@ -218,6 +246,31 @@ void MX_CAN_Init(void)
   hcan.Init.TXFP = DISABLE;
   HAL_CAN_Init(&hcan);
 
+
+  /*##-2- Configure the CAN Filter ###########################################*/
+  /*sFilterConfig.FilterNumber = 0;
+  sFilterConfig.FilterMode = CAN_FILTERMODE_IDMASK;
+  sFilterConfig.FilterScale = CAN_FILTERSCALE_32BIT;
+  sFilterConfig.FilterIdHigh = 0x0000;
+  sFilterConfig.FilterIdLow = 0x0000;
+  sFilterConfig.FilterMaskIdHigh = 0x0000;
+  sFilterConfig.FilterMaskIdLow = 0x0000;
+  sFilterConfig.FilterFIFOAssignment = 0;
+  sFilterConfig.FilterActivation = ENABLE;
+  sFilterConfig.BankNumber = 14;
+
+  if (HAL_CAN_ConfigFilter(&hcan, &sFilterConfig) != HAL_OK)
+  {
+
+    Error_Handler();
+  }*/
+
+  /*##-3- Configure Transmission process #####################################*/
+  hcan.pTxMsg->StdId = 0x321;
+  hcan.pTxMsg->ExtId = 0x01;
+  hcan.pTxMsg->RTR = CAN_RTR_DATA;
+  hcan.pTxMsg->IDE = CAN_ID_STD;
+  hcan.pTxMsg->DLC = 2;
 }
 
 /* CRC init function */
